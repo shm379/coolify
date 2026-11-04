@@ -85,7 +85,7 @@ class Access extends Component
     }
 
     /**
-     * The grants of a preset, or null for an unknown preset. The developer preset needs a project UUID.
+     * The grants of a preset, or null for an unknown preset. Project presets need a project UUID.
      *
      * @return list<Grant>|null
      */
@@ -93,6 +93,7 @@ class Access extends Component
     {
         return match ($preset) {
             'viewer' => [Grant::team([AccessLevel::Read])],
+            'deployer' => filled($projectUuid) ? [new Grant(AccessScope::Project, $projectUuid, [AccessLevel::Deploy])] : null,
             'developer' => filled($projectUuid) ? [new Grant(AccessScope::Project, $projectUuid, [AccessLevel::Write, AccessLevel::Deploy])] : null,
             'operator' => [Grant::team([AccessLevel::Write, AccessLevel::Deploy, AccessLevel::Delete])],
             'full' => [Grant::team([AccessLevel::Root])],
@@ -278,7 +279,7 @@ class Access extends Component
                 'description' => $level->description(),
                 'includes' => array_map(fn (AccessLevel $included) => $included->name, $level->includes()),
             ])->all(),
-            'presets' => collect(['viewer', 'developer', 'operator', 'full'])->mapWithKeys(fn (string $preset) => [
+            'presets' => collect(['viewer', 'deployer', 'developer', 'operator', 'full'])->mapWithKeys(fn (string $preset) => [
                 $preset => $this->rowsFrom(self::presetGrants($preset, '__project__'))[0],
             ])->all(),
             'projectOptions' => collect($this->scopeOptions)->filter(fn (array $option) => str_starts_with($option['value'], 'project:'))->values(),

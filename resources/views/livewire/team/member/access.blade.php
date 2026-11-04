@@ -7,6 +7,7 @@
         @php
             $presetInfo = [
                 'viewer' => ['label' => 'Viewer', 'description' => 'Read the whole team.'],
+                'deployer' => ['label' => 'Deployer', 'description' => 'Redeploy one project; cannot edit settings or directly read secret values.'],
                 'developer' => ['label' => 'Developer', 'description' => 'Write and deploy in one project.'],
                 'operator' => ['label' => 'Operator', 'description' => 'Write, deploy, and delete in the whole team.'],
                 'full' => ['label' => 'Full access', 'description' => 'Every level in the whole team.'],
@@ -69,11 +70,11 @@
                 </div>
                 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     @foreach ($presetInfo as $preset => $info)
-                        @if ($preset === 'developer')
+                        @if (in_array($preset, ['deployer', 'developer'], true))
                             @if ($projectOptions->isNotEmpty())
                                 <div x-data="{ open: false }" @keydown.escape.window="open = false">
                                     <button type="button" class="{{ $presetCard }}" x-ref="trigger"
-                                        :class="activePreset === 'developer' ? @js($presetActive) : @js($presetIdle)"
+                                        :class="activePreset === @js($preset) ? @js($presetActive) : @js($presetIdle)"
                                         @click="open = !open" aria-haspopup="menu" :aria-expanded="open">
                                         <span class="flex w-full items-center justify-between gap-2 text-[13px] text-neutral-800 dark:text-fg">
                                             {{ $info['label'] }}
@@ -88,7 +89,7 @@
                                             class="listbox-panel min-w-48! z-[100]!">
                                             @foreach ($projectOptions as $project)
                                                 <button type="button" class="listbox-option justify-start!"
-                                                    @click="applyPreset('developer', @js(Str::after($project['value'], 'project:'))); open = false">
+                                                    @click="applyPreset(@js($preset), @js(Str::after($project['value'], 'project:'))); open = false">
                                                     {{ $project['label'] }}
                                                 </button>
                                             @endforeach

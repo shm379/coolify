@@ -61,6 +61,16 @@ class ProjectPolicy
     }
 
     /**
+     * Transferring ownership exposes project settings and secrets to another team.
+     * Only the source team owner can initiate it; the service checks destination ownership.
+     */
+    public function transferTeam(User $user, Project $project): bool
+    {
+        return $user->teams()->where('teams.id', $project->team_id)
+            ->wherePivot('role', 'owner')->exists();
+    }
+
+    /**
      * Determine whether the user can restore the model.
      */
     public function restore(User $user, Project $project): bool
