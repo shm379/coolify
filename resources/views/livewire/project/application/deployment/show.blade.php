@@ -352,7 +352,8 @@
                             </div>
                             <div class="logs-viewer-end">
                                 <livewire:project.application.deployment-navbar
-                                    :application_deployment_queue="$application_deployment_queue" />
+                                    :application_deployment_queue="$application_deployment_queue"
+                                    :key="'deployment-navbar-'.$deployment_uuid" />
                             <div class="logs-viewer-search relative">
                                 <x-reicon name="search"
                                     class="pointer-events-none absolute top-1/2 left-2.5 z-10 size-3.5 -translate-y-1/2 text-neutral-400 dark:text-fg-faint" />
