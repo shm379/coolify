@@ -189,3 +189,35 @@ it('exports the displayed deployment logs with secrets hidden and the full log w
     expect($full)->toContain('[DEBUG] internal debug step')
         ->not->toContain('deploy-export-canary');
 });
+
+it('keys the deployment action navbar to the selected deployment UUID', function () {
+    // Livewire preserves unkeyed child components when the parent switches deployments.
+    // The navbar must be remounted so its cancel/force-start actions use the selected queue.
+    $view = file_get_contents(resource_path('views/livewire/project/application/deployment/show.blade.php'));
+
+    expect($view)->toContain(':key="\'deployment-navbar-\'.$deployment_uuid"');
+
+    $makeDeployment = fn (string $uuid, ApplicationDeploymentStatus $status) => ApplicationDeploymentQueue::create([
+        'application_id' => $this->application->id,
+        'deployment_uuid' => $uuid,
+        'server_id' => $this->server->id,
+        'status' => $status->value,
+    ]);
+
+    $cancelled = $makeDeployment('navbar-cancelled', ApplicationDeploymentStatus::CANCELLED_BY_USER);
+    $running = $makeDeployment('navbar-running', ApplicationDeploymentStatus::IN_PROGRESS);
+
+    Livewire::test(Show::class, [
+        'project_uuid' => $this->project->uuid,
+        'environment_uuid' => $this->environment->uuid,
+        'application_uuid' => $this->application->uuid,
+        'deployment_uuid' => $cancelled->deployment_uuid,
+    ])
+        ->assertSet('application_deployment_queue.id', $cancelled->id)
+        ->call('selectDeployment', $running->deployment_uuid)
+        ->assertSet('application_deployment_queue.id', $running->id)
+        ->assertSet('application_deployment_queue.status', ApplicationDeploymentStatus::IN_PROGRESS->value)
+        ->call('selectDeployment', $cancelled->deployment_uuid)
+        ->assertSet('application_deployment_queue.id', $cancelled->id)
+        ->assertSet('application_deployment_queue.status', ApplicationDeploymentStatus::CANCELLED_BY_USER->value);
+});
